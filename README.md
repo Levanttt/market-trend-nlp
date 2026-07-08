@@ -7,57 +7,57 @@
 
 ## Deskripsi Proyek
 
-Project ini dibuat untuk UAS mata kuliah Artificial Intelligence dengan topik **Analisis Tren Pasar Berdasarkan Berita Ekonomi**.
+Repositori ini memuat implementasi *end-to-end pipeline* Artificial Intelligence untuk menganalisis sentimen berita ekonomi dari CNBC Indonesia. Sistem mengorkestrasikan ekstraksi fitur teks, model machine learning klasifikasi, dan sistem pakar berbasis heuristik untuk memberikan rekomendasi tren pasar saham secara otomatis via REST API.
 
-Sistem ini bertujuan membantu membaca sentimen dari judul berita ekonomi CNBC Indonesia. Dengan pendekatan NLP, judul berita dapat diklasifikasikan menjadi tiga label:
+Masalah utama yang diselesaikan adalah *information overload* bagi pelaku pasar saham. Melalui pendekatan pemrosesan bahasa alami, sistem ini membaca dan mengkategorikan tendensi judul berita menjadi tiga label objektif: **Negatif**, **Netral**, dan **Positif**.
 
-- `negatif`
-- `netral`
-- `positif`
+Dataset bersumber dari Kaggle: [CNBC Indonesia Stock News Sentiment Dataset](https://www.kaggle.com/datasets/triagungj/cnbc-indonesia-stock-news-sentiment-dataset).
 
-Dataset yang digunakan berasal dari Kaggle:
-https://www.kaggle.com/datasets/triagungj/cnbc-indonesia-stock-news-sentiment-dataset
+---
 
-## Alur Sistem
+## Arsitektur & Alur Sistem
+
+Sistem dirancang modular memisahkan *frontend*, *backend*, dan *inference engine*.
 
 ```text
-Input Judul Berita
+[Input Judul Berita]
+        |
+   Streamlit UI
+        | (HTTP POST JSON)
+        v
+ FastAPI Endpoint (Backend)
         |
         v
-Streamlit UI
+[Mesin NLP: Preprocessing]
+(Lowercase, hapus simbol/angka, rapikan spasi)
         |
         v
-FastAPI Endpoint
+[Mesin NLP: Ekstraksi]
+(Transformasi TF-IDF)
         |
         v
-Preprocessing Teks
-lowercase, hapus simbol, hapus angka, rapikan spasi
+[Inference: Model SVM]  --> Output Sentimen (Negatif/Netral/Positif)
         |
         v
-Ekstraksi Fitur TF-IDF
+[Expert System Rule-Base]
         |
         v
-Model SVM
-        |
-        v
-Expert System Tren Pasar
-        |
-        v
-Output Sentimen dan Rekomendasi Tren
-negatif / netral / positif + bearish / stagnant / bullish
+[Final Output] --> Rekomendasi Tren (Bearish/Stagnant/Bullish)
 ```
 
-## Teknik AI yang Digunakan
+---
 
-Project ini menggunakan tiga teknik utama:
+## Teknik AI & Justifikasi Arsitektur
 
-- **Natural Language Processing (NLP)** untuk membersihkan dan memproses teks berita.
-- **Supervised Machine Learning** menggunakan SVM untuk klasifikasi sentimen.
-- **Expert System sederhana** untuk mengubah hasil sentimen menjadi rekomendasi tren pasar.
+Proyek ini mengintegrasikan tiga pilar teknologi utama:
 
-TF-IDF digunakan untuk mengubah teks menjadi angka agar dapat diproses oleh model machine learning.
+1. **Natural Language Processing (NLP) & TF-IDF:** Digunakan untuk *noise reduction* dan mengubah struktur teks menjadi matriks probabilitas numerik.
+2. **Support Vector Machine (SVM):** Dipilih sebagai model klasifikasi utama karena algoritma *linear kernel*-nya terbukti empiris sangat stabil dan efisien dalam mencari *hyperplane* pemisah pada ruang dimensi tinggi yang dihasilkan oleh matriks *sparse* TF-IDF.
+3. **Sistem Pakar (Expert System):** Bertugas sebagai *decision-support layer* yang menerjemahkan hasil klasifikasi model NLP menjadi rekomendasi tren pasar saham yang *actionable* bagi pengguna.
 
-## Struktur Folder
+---
+
+## Struktur Repositori
 
 ```text
 market-trend-nlp/
@@ -76,75 +76,56 @@ market-trend-nlp/
 `-- README.md
 ```
 
-## Ringkasan Notebook
+---
 
-### 1. EDA
+## Metrik & Evaluasi Model
 
-Notebook `notebooks/01_EDA_and_Modeling.ipynb` berisi eksplorasi awal dataset, seperti:
+Data dipisahkan secara ketat (*train-test split*) sebelum proses ekstraksi TF-IDF untuk mencegah kebocoran data (*data leakage*). Evaluasi akhir menunjukkan performa yang solid untuk *baseline* model klasifikasi teks bahasa Indonesia:
 
-- melihat struktur data,
-- mengecek missing value,
-- menghapus data duplikat,
-- melihat distribusi sentimen,
-- menganalisis panjang judul berita,
-- membuat word cloud.
+* **Accuracy** : 0.82
+* **Weighted Precision**: 0.82
+* **Weighted Recall** : 0.82
+* **Weighted F1-Score** : 0.82
 
-Hasil EDA menunjukkan dataset memiliki 9.819 data awal. Setelah 3 data duplikat dihapus, data yang digunakan menjadi 9.816 baris.
+---
 
-### 2. Modeling
+## Setup & Panduan Instalasi
 
-Notebook `notebooks/02_Modeling.ipynb` berisi proses:
+Sistem dapat dijalankan secara lokal dengan langkah-langkah berikut:
 
-- preprocessing teks,
-- split data training dan testing,
-- ekstraksi fitur menggunakan TF-IDF,
-- training model SVM,
-- evaluasi model,
-- export model dan vectorizer,
-- sanity check prediksi.
-
-Hasil evaluasi model menunjukkan accuracy dan weighted F1-Score sekitar **82%**.
-
-## Setup Project
-
-Clone repository:
+**1. Clone Repository & Install Dependencies**
 
 ```bash
 git clone https://github.com/Levanttt/market-trend-nlp.git
 cd market-trend-nlp
-```
-
-Install dependency utama:
-
-```bash
 pip install -r requirements.txt
 ```
 
-Jalankan API FastAPI:
+**2. Menjalankan Backend (FastAPI)**
+Buka terminal dan jalankan server API:
 
 ```bash
 uvicorn src.api:app --reload
 ```
 
-Jalankan aplikasi Streamlit di terminal lain:
+*Dokumentasi Swagger UI otomatis dapat diakses di: `http://127.0.0.1:8000/docs`*
+
+**3. Menjalankan Frontend (Streamlit)**
+Buka terminal baru (biarkan server API tetap berjalan) dan eksekusi:
 
 ```bash
 streamlit run src/app.py
 ```
 
-## Format Input dan Output API
+---
 
-Sistem menyediakan REST API untuk menerima input berita dan mengembalikan hasil analisis sentimen serta rekomendasi tren.
+## Spesifikasi REST API
 
-### Request
+Sistem diorkestrasikan menggunakan metode HTTP POST dengan format payload standar industri.
 
-Endpoint:
+**Endpoint:** `POST /api/predict_trend`
 
-```text
-POST /api/predict_trend
-```
-
-Payload JSON:
+**Request Payload:**
 
 ```json
 {
@@ -153,9 +134,7 @@ Payload JSON:
 }
 ```
 
-### Response Berhasil
-
-Status: `200 OK`
+**Response (200 OK):**
 
 ```json
 {
@@ -169,39 +148,10 @@ Status: `200 OK`
 }
 ```
 
-### Response Gagal
-
-Status: `400 Bad Request`
-
-```json
-{
-  "detail": "Bad Request: Teks berita tidak boleh kosong."
-}
-```
-
-## Evaluasi Model
-
-Metrik evaluasi yang digunakan:
-
-- Accuracy
-- Precision
-- Recall
-- F1-Score
-
-Ringkasan hasil:
-
-```text
-Accuracy          : 0.82
-Weighted Precision: 0.82
-Weighted Recall   : 0.82
-Weighted F1-Score : 0.82
-```
-
-Model sudah cukup baik untuk baseline klasifikasi sentimen berita ekonomi. Namun, model masih dapat dikembangkan lagi, misalnya dengan stemming bahasa Indonesia, tuning parameter SVM, atau menggunakan model berbasis transformer seperti IndoBERT.
+---
 
 ## Referensi
 
-- Kaggle: CNBC Indonesia Stock News Sentiment Dataset.
-- Scikit-learn Documentation: TF-IDF, SVM, dan classification metrics.
-- WordCloud Python Documentation.
-- Streamlit Documentation.
+* Kaggle: CNBC Indonesia Stock News Sentiment Dataset.
+* Scikit-learn Documentation: TF-IDF, SVM, dan metrik klasifikasi.
+* FastAPI & Streamlit Official Documentation.
