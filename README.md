@@ -24,6 +24,12 @@ https://www.kaggle.com/datasets/triagungj/cnbc-indonesia-stock-news-sentiment-da
 Input Judul Berita
         |
         v
+Streamlit UI
+        |
+        v
+FastAPI Endpoint
+        |
+        v
 Preprocessing Teks
 lowercase, hapus simbol, hapus angka, rapikan spasi
         |
@@ -34,8 +40,11 @@ Ekstraksi Fitur TF-IDF
 Model SVM
         |
         v
-Output Sentimen
-negatif / netral / positif
+Expert System Tren Pasar
+        |
+        v
+Output Sentimen dan Rekomendasi Tren
+negatif / netral / positif + bearish / stagnant / bullish
 ```
 
 ## Teknik AI yang Digunakan
@@ -44,6 +53,7 @@ Project ini menggunakan dua teknik utama:
 
 - **Natural Language Processing (NLP)** untuk membersihkan dan memproses teks berita.
 - **Supervised Machine Learning** menggunakan SVM untuk klasifikasi sentimen.
+- **Expert System sederhana** untuk mengubah hasil sentimen menjadi rekomendasi tren pasar.
 
 TF-IDF digunakan untuk mengubah teks menjadi angka agar dapat diproses oleh model machine learning.
 
@@ -59,7 +69,10 @@ market-trend-nlp/
 |-- notebooks/
 |   |-- 01_EDA_and_Modeling.ipynb
 |   `-- 02_Modeling.ipynb
-|-- streamlit_app.py
+|-- src/
+|   |-- api.py
+|   `-- app.py
+|-- requirements.txt
 `-- README.md
 ```
 
@@ -104,13 +117,19 @@ cd market-trend-nlp
 Install dependency utama:
 
 ```bash
-pip install pandas numpy scikit-learn joblib matplotlib seaborn wordcloud streamlit
+pip install -r requirements.txt
 ```
 
-Jalankan aplikasi Streamlit:
+Jalankan API FastAPI:
 
 ```bash
-streamlit run streamlit_app.py
+uvicorn src.api:app --reload
+```
+
+Jalankan aplikasi Streamlit di terminal lain:
+
+```bash
+streamlit run src/app.py
 ```
 
 ## Format Input dan Output API
@@ -122,14 +141,15 @@ Jika sistem dikembangkan menjadi REST API, format request dan response dapat dib
 Endpoint:
 
 ```text
-POST /predict
+POST /api/predict_trend
 ```
 
 Payload JSON:
 
 ```json
 {
-  "text": "IHSG anjlok setelah pengumuman kenaikan suku bunga The Fed."
+  "text": "IHSG anjlok setelah pengumuman kenaikan suku bunga The Fed.",
+  "source": "Streamlit UI"
 }
 ```
 
@@ -139,11 +159,13 @@ Status: `200 OK`
 
 ```json
 {
-  "status": 200,
-  "message": "Prediksi berhasil",
-  "input": "IHSG anjlok setelah pengumuman kenaikan suku bunga The Fed.",
-  "sentiment": "negatif",
-  "confidence": 0.9373
+  "status": "success",
+  "berita_asli": "IHSG anjlok setelah pengumuman kenaikan suku bunga The Fed.",
+  "hasil_analisis": {
+    "sentimen": "NEGATIF",
+    "confidence_score": 93.73,
+    "rekomendasi_tren": "BEARISH - Sentimen pasar negatif, waspada tekanan jual."
+  }
 }
 ```
 
@@ -153,8 +175,7 @@ Status: `400 Bad Request`
 
 ```json
 {
-  "status": 400,
-  "message": "Input text wajib diisi"
+  "detail": "Bad Request: Teks berita tidak boleh kosong."
 }
 ```
 
