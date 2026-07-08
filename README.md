@@ -1,13 +1,13 @@
 # Market Trend NLP
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![NLP](https://img.shields.io/badge/AI-NLP-green)
 ![Model](https://img.shields.io/badge/Model-SVM-orange)
 ![Status](https://img.shields.io/badge/Status-UAS_Project-lightgrey)
 
 ## Deskripsi Proyek
 
-Repositori ini memuat implementasi *end-to-end pipeline* Artificial Intelligence untuk menganalisis sentimen berita ekonomi dari CNBC Indonesia. Sistem mengorkestrasikan ekstraksi fitur teks, model machine learning klasifikasi, dan sistem pakar berbasis heuristik untuk memberikan rekomendasi tren pasar saham secara otomatis via REST API.
+Repositori ini memuat implementasi *end-to-end pipeline* Artificial Intelligence untuk menganalisis sentimen berita ekonomi dari CNBC Indonesia. Sistem mengorkestrasikan ekstraksi fitur teks, model machine learning klasifikasi, dan sistem pakar berbasis heuristik untuk memberikan rekomendasi tren pasar saham secara otomatis.
 
 Masalah utama yang diselesaikan adalah *information overload* bagi pelaku pasar saham. Melalui pendekatan pemrosesan bahasa alami, sistem ini membaca dan mengkategorikan tendensi judul berita menjadi tiga label objektif: **Negatif**, **Netral**, dan **Positif**.
 
@@ -17,32 +17,22 @@ Dataset bersumber dari Kaggle: [CNBC Indonesia Stock News Sentiment Dataset](htt
 
 ## Arsitektur & Alur Sistem
 
-Sistem dirancang modular memisahkan *frontend*, *backend*, dan *inference engine*.
+Untuk mengakomodasi penilaian akademis dan aksesibilitas publik, sistem ini dirancang dengan dua pendekatan arsitektur:
+
+### 1. Mode Lokal / Development (Microservices)
+
+Menggunakan REST API berstandar industri dengan pemisahan *backend* dan *frontend*.
 
 ```text
-[Input Judul Berita]
-        |
-   Streamlit UI
-        | (HTTP POST JSON)
-        v
- FastAPI Endpoint (Backend)
-        |
-        v
-[Mesin NLP: Preprocessing]
-(Lowercase, hapus simbol/angka, rapikan spasi)
-        |
-        v
-[Mesin NLP: Ekstraksi]
-(Transformasi TF-IDF)
-        |
-        v
-[Inference: Model SVM]  --> Output Sentimen (Negatif/Netral/Positif)
-        |
-        v
-[Expert System Rule-Base]
-        |
-        v
-[Final Output] --> Rekomendasi Tren (Bearish/Stagnant/Bullish)
+[Streamlit UI] ---> (HTTP POST) ---> [FastAPI Endpoint] ---> [NLP & SVM Pipeline]
+```
+
+### 2. Mode Live Demo (Monolitik)
+
+Dioptimalkan untuk cloud deployment publik (Streamlit Community Cloud) tanpa limitasi server gratis, di mana pipeline NLP diintegrasikan langsung ke dalam frontend.
+
+```text
+[Input Berita] -> [Streamlit App] -> [Local NLP Preprocessing] -> [SVM Model] -> [Expert System] -> [Output]
 ```
 
 ---
@@ -70,8 +60,8 @@ market-trend-nlp/
 |   |-- 01_EDA_and_Modeling.ipynb
 |   `-- 02_Modeling.ipynb
 |-- src/
-|   |-- api.py
-|   `-- app.py
+|   |-- api.py (REST API Backend)
+|   `-- app.py (Streamlit Frontend)
 |-- requirements.txt
 `-- README.md
 ```
@@ -91,7 +81,13 @@ Data dipisahkan secara ketat (*train-test split*) sebelum proses ekstraksi TF-ID
 
 ## Setup & Panduan Instalasi
 
-Sistem dapat dijalankan secara lokal dengan langkah-langkah berikut:
+### Live Demo Publik
+
+Aplikasi dapat langsung diakses dan diuji coba melalui Streamlit Community Cloud pada tautan berikut: [https://market-trend-nlp.streamlit.app/](#)
+
+### Instalasi Lokal (API Mode)
+
+Jika ingin menjalankan sistem secara lokal beserta dokumentasi API-nya:
 
 **1. Clone Repository & Install Dependencies**
 
@@ -101,17 +97,16 @@ cd market-trend-nlp
 pip install -r requirements.txt
 ```
 
-**2. Menjalankan Backend (FastAPI)**
-Buka terminal dan jalankan server API:
+**2. Menjalankan Backend API (FastAPI)**
 
 ```bash
 uvicorn src.api:app --reload
 ```
 
-*Dokumentasi Swagger UI otomatis dapat diakses di: `http://127.0.0.1:8000/docs`*
+Dokumentasi Swagger UI otomatis dapat diakses di: `http://127.0.0.1:8000/docs`
 
 **3. Menjalankan Frontend (Streamlit)**
-Buka terminal baru (biarkan server API tetap berjalan) dan eksekusi:
+Buka terminal baru dan eksekusi:
 
 ```bash
 streamlit run src/app.py
@@ -119,9 +114,9 @@ streamlit run src/app.py
 
 ---
 
-## Spesifikasi REST API
+## Spesifikasi REST API (Untuk Mode Lokal)
 
-Sistem diorkestrasikan menggunakan metode HTTP POST dengan format payload standar industri.
+Sistem backend diorkestrasikan menggunakan metode HTTP POST dengan format payload standar industri.
 
 **Endpoint:** `POST /api/predict_trend`
 
@@ -130,7 +125,7 @@ Sistem diorkestrasikan menggunakan metode HTTP POST dengan format payload standa
 ```json
 {
   "text": "IHSG anjlok setelah pengumuman kenaikan suku bunga The Fed.",
-  "source": "Streamlit UI"
+  "source": "Local Testing"
 }
 ```
 
