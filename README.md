@@ -49,7 +49,7 @@ negatif / netral / positif + bearish / stagnant / bullish
 
 ## Teknik AI yang Digunakan
 
-Project ini menggunakan dua teknik utama:
+Project ini menggunakan tiga teknik utama:
 
 - **Natural Language Processing (NLP)** untuk membersihkan dan memproses teks berita.
 - **Supervised Machine Learning** menggunakan SVM untuk klasifikasi sentimen.
@@ -134,7 +134,7 @@ streamlit run src/app.py
 
 ## Format Input dan Output API
 
-Jika sistem dikembangkan menjadi REST API, format request dan response dapat dibuat seperti berikut.
+Sistem menyediakan REST API untuk menerima input berita dan mengembalikan hasil analisis sentimen serta rekomendasi tren.
 
 ### Request
 
