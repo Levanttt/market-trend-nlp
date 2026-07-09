@@ -1,63 +1,53 @@
 # Market Trend NLP
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
+![Python](https://img.shields.io/badge/Python-3.11-blue)
 ![NLP](https://img.shields.io/badge/AI-NLP-green)
 ![Model](https://img.shields.io/badge/Model-SVM-orange)
 ![Status](https://img.shields.io/badge/Status-UAS_Project-lightgrey)
 
 ## Deskripsi Proyek
 
-Project ini dibuat untuk UAS mata kuliah Artificial Intelligence dengan topik **Analisis Tren Pasar Berdasarkan Berita Ekonomi**.
+Repositori ini memuat implementasi *end-to-end pipeline* Artificial Intelligence untuk menganalisis sentimen berita ekonomi dari CNBC Indonesia. Sistem mengorkestrasikan ekstraksi fitur teks, model machine learning klasifikasi, dan sistem pakar berbasis heuristik untuk memberikan rekomendasi tren pasar saham secara otomatis.
 
-Sistem ini bertujuan membantu membaca sentimen dari judul berita ekonomi CNBC Indonesia. Dengan pendekatan NLP, judul berita dapat diklasifikasikan menjadi tiga label:
+Masalah utama yang diselesaikan adalah *information overload* bagi pelaku pasar saham. Melalui pendekatan pemrosesan bahasa alami, sistem ini membaca dan mengkategorikan tendensi judul berita menjadi tiga label objektif: **Negatif**, **Netral**, dan **Positif**.
 
-- `negatif`
-- `netral`
-- `positif`
+Dataset bersumber dari Kaggle: [CNBC Indonesia Stock News Sentiment Dataset](https://www.kaggle.com/datasets/triagungj/cnbc-indonesia-stock-news-sentiment-dataset).
 
-Dataset yang digunakan berasal dari Kaggle:
-https://www.kaggle.com/datasets/triagungj/cnbc-indonesia-stock-news-sentiment-dataset
+---
 
-## Alur Sistem
+## Arsitektur & Alur Sistem
+
+Untuk mengakomodasi penilaian akademis dan aksesibilitas publik, sistem ini dirancang dengan dua pendekatan arsitektur:
+
+### 1. Mode Lokal / Development (Microservices)
+
+Menggunakan REST API berstandar industri dengan pemisahan *backend* dan *frontend*.
 
 ```text
-Input Judul Berita
-        |
-        v
-Streamlit UI
-        |
-        v
-FastAPI Endpoint
-        |
-        v
-Preprocessing Teks
-lowercase, hapus simbol, hapus angka, rapikan spasi
-        |
-        v
-Ekstraksi Fitur TF-IDF
-        |
-        v
-Model SVM
-        |
-        v
-Expert System Tren Pasar
-        |
-        v
-Output Sentimen dan Rekomendasi Tren
-negatif / netral / positif + bearish / stagnant / bullish
+[Streamlit UI] ---> (HTTP POST) ---> [FastAPI Endpoint] ---> [NLP & SVM Pipeline]
 ```
 
-## Teknik AI yang Digunakan
+### 2. Mode Live Demo (Monolitik)
 
-Project ini menggunakan dua teknik utama:
+Dioptimalkan untuk cloud deployment publik (Streamlit Community Cloud) tanpa limitasi server gratis, di mana pipeline NLP diintegrasikan langsung ke dalam frontend.
 
-- **Natural Language Processing (NLP)** untuk membersihkan dan memproses teks berita.
-- **Supervised Machine Learning** menggunakan SVM untuk klasifikasi sentimen.
-- **Expert System sederhana** untuk mengubah hasil sentimen menjadi rekomendasi tren pasar.
+```text
+[Input Berita] -> [Streamlit App] -> [Local NLP Preprocessing] -> [SVM Model] -> [Expert System] -> [Output]
+```
 
-TF-IDF digunakan untuk mengubah teks menjadi angka agar dapat diproses oleh model machine learning.
+---
 
-## Struktur Folder
+## Teknik AI & Justifikasi Arsitektur
+
+Proyek ini mengintegrasikan tiga pilar teknologi utama:
+
+1. **Natural Language Processing (NLP) & TF-IDF:** Digunakan untuk *noise reduction* dan mengubah struktur teks menjadi matriks probabilitas numerik.
+2. **Support Vector Machine (SVM):** Dipilih sebagai model klasifikasi utama karena algoritma *linear kernel*-nya terbukti empiris sangat stabil dan efisien dalam mencari *hyperplane* pemisah pada ruang dimensi tinggi yang dihasilkan oleh matriks *sparse* TF-IDF.
+3. **Sistem Pakar (Expert System):** Bertugas sebagai *decision-support layer* yang menerjemahkan hasil klasifikasi model NLP menjadi rekomendasi tren pasar saham yang *actionable* bagi pengguna.
+
+---
+
+## Struktur Repositori
 
 ```text
 market-trend-nlp/
@@ -70,92 +60,76 @@ market-trend-nlp/
 |   |-- 01_EDA_and_Modeling.ipynb
 |   `-- 02_Modeling.ipynb
 |-- src/
-|   |-- api.py
-|   `-- app.py
+|   |-- api.py (REST API Backend)
+|   `-- app.py (Streamlit Frontend)
 |-- requirements.txt
 `-- README.md
 ```
 
-## Ringkasan Notebook
+---
 
-### 1. EDA
+## Metrik & Evaluasi Model
 
-Notebook `notebooks/01_EDA_and_Modeling.ipynb` berisi eksplorasi awal dataset, seperti:
+Data dipisahkan secara ketat (*train-test split*) sebelum proses ekstraksi TF-IDF untuk mencegah kebocoran data (*data leakage*). Evaluasi akhir menunjukkan performa yang solid untuk *baseline* model klasifikasi teks bahasa Indonesia:
 
-- melihat struktur data,
-- mengecek missing value,
-- menghapus data duplikat,
-- melihat distribusi sentimen,
-- menganalisis panjang judul berita,
-- membuat word cloud.
+* **Accuracy** : 0.82
+* **Weighted Precision**: 0.82
+* **Weighted Recall** : 0.82
+* **Weighted F1-Score** : 0.82
 
-Hasil EDA menunjukkan dataset memiliki 9.819 data awal. Setelah 3 data duplikat dihapus, data yang digunakan menjadi 9.816 baris.
+---
 
-### 2. Modeling
+## Setup & Panduan Instalasi
 
-Notebook `notebooks/02_Modeling.ipynb` berisi proses:
+### Live Demo Publik
 
-- preprocessing teks,
-- split data training dan testing,
-- ekstraksi fitur menggunakan TF-IDF,
-- training model SVM,
-- evaluasi model,
-- export model dan vectorizer,
-- sanity check prediksi.
+Aplikasi dapat langsung diakses dan diuji coba melalui Streamlit Community Cloud pada tautan berikut: [https://market-trend-nlp.streamlit.app/](#)
 
-Hasil evaluasi model menunjukkan accuracy dan weighted F1-Score sekitar **82%**.
+### Instalasi Lokal (API Mode)
 
-## Setup Project
+Jika ingin menjalankan sistem secara lokal beserta dokumentasi API-nya:
 
-Clone repository:
+**1. Clone Repository & Install Dependencies**
 
 ```bash
 git clone https://github.com/Levanttt/market-trend-nlp.git
 cd market-trend-nlp
-```
-
-Install dependency utama:
-
-```bash
 pip install -r requirements.txt
 ```
 
-Jalankan API FastAPI:
+**2. Menjalankan Backend API (FastAPI)**
 
 ```bash
 uvicorn src.api:app --reload
 ```
 
-Jalankan aplikasi Streamlit di terminal lain:
+Dokumentasi Swagger UI otomatis dapat diakses di: `http://127.0.0.1:8000/docs`
+
+**3. Menjalankan Frontend (Streamlit)**
+Buka terminal baru dan eksekusi:
 
 ```bash
 streamlit run src/app.py
 ```
 
-## Format Input dan Output API
+---
 
-Jika sistem dikembangkan menjadi REST API, format request dan response dapat dibuat seperti berikut.
+## Spesifikasi REST API (Untuk Mode Lokal)
 
-### Request
+Sistem backend diorkestrasikan menggunakan metode HTTP POST dengan format payload standar industri.
 
-Endpoint:
+**Endpoint:** `POST /api/predict_trend`
 
-```text
-POST /api/predict_trend
-```
-
-Payload JSON:
+**Request Payload:**
 
 ```json
 {
   "text": "IHSG anjlok setelah pengumuman kenaikan suku bunga The Fed.",
-  "source": "Streamlit UI"
+  "source": "Local Testing"
 }
 ```
 
-### Response Berhasil
-
-Status: `200 OK`
+**Response (200 OK):**
 
 ```json
 {
@@ -169,39 +143,10 @@ Status: `200 OK`
 }
 ```
 
-### Response Gagal
-
-Status: `400 Bad Request`
-
-```json
-{
-  "detail": "Bad Request: Teks berita tidak boleh kosong."
-}
-```
-
-## Evaluasi Model
-
-Metrik evaluasi yang digunakan:
-
-- Accuracy
-- Precision
-- Recall
-- F1-Score
-
-Ringkasan hasil:
-
-```text
-Accuracy          : 0.82
-Weighted Precision: 0.82
-Weighted Recall   : 0.82
-Weighted F1-Score : 0.82
-```
-
-Model sudah cukup baik untuk baseline klasifikasi sentimen berita ekonomi. Namun, model masih dapat dikembangkan lagi, misalnya dengan stemming bahasa Indonesia, tuning parameter SVM, atau menggunakan model berbasis transformer seperti IndoBERT.
+---
 
 ## Referensi
 
-- Kaggle: CNBC Indonesia Stock News Sentiment Dataset.
-- Scikit-learn Documentation: TF-IDF, SVM, dan classification metrics.
-- WordCloud Python Documentation.
-- Streamlit Documentation.
+* Kaggle: CNBC Indonesia Stock News Sentiment Dataset.
+* Scikit-learn Documentation: TF-IDF, SVM, dan metrik klasifikasi.
+* FastAPI & Streamlit Official Documentation.
